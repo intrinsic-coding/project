@@ -1,0 +1,105 @@
+package main
+
+import (
+	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"log"
+	"math/rand/v2"
+	"net/http"
+	"os"
+	"strings"
+)
+
+var payload []byte
+
+type Item struct {
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Data    string `json:"data"`
+}
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func generateString(length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.IntN(len(charset))]
+	}
+	return string(b)
+}
+
+func init() {
+	items := make([]Item, 0, 10000)
+	blob := strings.Repeat("abcdefghijklmnopqrstuvwxyz0123456789", 8)
+	for i := 0; ; i++ {
+		items = append(items, Item{
+			ID:      i,
+			Name:    fmt.Sprintf("node-%d - %s", i, generateString(16)),
+			Address: fmt.Sprintf("192.168.1.%d - %s", i%255, generateString(16)),
+			Data:    blob,
+		})
+		b, _ := json.Marshal(items)
+		if len(b) >= 32*1024 {
+			//if len(b) >= 2*1024*1024 {
+			payload = b
+			log.Printf(
+				"Generated JSON: %.2f MiB (%d bytes)",
+				float64(len(b))/1024/1024,
+				len(b),
+			)
+			break
+		}
+	}
+}
+
+func getCert() (tls.Certificate, error) {
+	const certBase64 = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJXVENDQVF1Z0F3SUJBZ0lVWE1tY016V3ZtMlUyV3IrSFBCeUhock5PbmhVd0JRWURLMlZ3TUJReEVqQVEKQmdOVkJBTU1DV3h2WTJGc2FHOXpkREFlRncweU5qQTRNamN4TURVd05EVmFGdzB5TnpBNE1qY3hNRFV3TkRWYQpNQlF4RWpBUUJnTlZCQU1NQ1d4dlkyRnNhRzl6ZERBcU1BVUdBeXRsY0FNaEFIV3A3TU9QWlFGcTZ1bFgyaC9SCmI1ZlBFbHRtdWVUM25zYlYvU0EyejM0Q28yOHdiVEFkQmdOVkhRNEVGZ1FVWmFNbG90ZGZDOThmNmVOeWpwVmQKVFNsZGM5UXdId1lEVlIwakJCZ3dGb0FVWmFNbG90ZGZDOThmNmVOeWpwVmRUU2xkYzlRd0R3WURWUjBUQVFILwpCQVV3QXdFQi96QWFCZ05WSFJFRUV6QVJnZ2xzYjJOaGJHaHZjM1NIQkg4QUFBRXdCUVlESzJWd0EwRUFmUUJKCmRJbFBwQzBoVEVWeDN3RVNqSlM4ZlBueGk4MFpmSW82K2pvSFQrRW5jOGUxMzdDaU5LY2JkcDFjQ3ppSkZRQkgKd3NYUWZPd0pjSzNWeWZrM0FRPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+	const keyBase64 = "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1DNENBUUF3QlFZREsyVndCQ0lFSURqWVhPQkpGUVVZY2xTd3NXei9vdUpMOWNJeTJoaUhYb05hY2Z3d2M1OHgKLS0tLS1FTkQgUFJJVkFURSBLRVktLS0tLQo="
+	certPEM, err := base64.StdEncoding.DecodeString(certBase64)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	keyPEM, err := base64.StdEncoding.DecodeString(keyBase64)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	cert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+	return cert, nil
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(payload)
+}
+
+func main() {
+	port := "443"
+	if len(os.Args) >= 2 {
+		port = os.Args[1]
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handler)
+	cert, err := getCert()
+	if err != nil {
+		log.Fatal(err)
+	}
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
+		TLSConfig: &tls.Config{
+			MinVersion:   tls.VersionTLS13,
+			Certificates: []tls.Certificate{cert},
+		},
+	}
+	server.Protocols = new(http.Protocols)
+	server.Protocols.SetHTTP1(true)
+	server.Protocols.SetHTTP2(true)
+	log.Println("Listening on https://localhost:" + port)
+	log.Fatal(server.ListenAndServeTLS("", ""))
+}

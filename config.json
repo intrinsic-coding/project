@@ -1,0 +1,27 @@
+{
+  "chains": {
+    "eth": {
+      "nodes": [
+        { "hostname": "https://rpc.ankr.com/eth/key" },
+        { "hostname": "https://docs-demo.quiknode.pro" },
+        { "hostname": "https://lb.drpc.org/ogrpc?network=eth&dkey=key" }
+      ],
+      "allowed_block_seconds_lag": 1800
+    },
+    "solana": {
+      "nodes": [
+        { "hostname": "https://lb.drpc.org/ogrpc?network=solana&dkey=key" },
+        { "hostname": "https://api.mainnet-beta.solana.com" }
+      ],
+      "allowed_block_seconds_lag": 20
+    },
+    "trx": {
+      "nodes": [
+        { "hostname": "https://rpc.ankr.com/trx/key" },
+        { "hostname": "https://api.trongrid.io" }
+      ],
+      "allowed_block_seconds_lag": 3600
+    }
+  },
+  "interval_seconds_health_check": 30
+}

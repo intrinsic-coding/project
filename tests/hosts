@@ -1,0 +1,15 @@
+127.0.0.1       localhost
+# Testing ip circuit breaker for balancer
+127.0.0.2       lb.drpc.org
+127.0.0.3       lb.drpc.org
+127.0.0.4       lb.drpc.org
+127.0.0.5       lb.drpc.org
+127.0.0.6       api.mainnet-beta.solana.com
+127.0.0.7       api.mainnet-beta.solana.com
+127.0.0.8       api.mainnet-beta.solana.com
+127.0.0.9       api.trongrid.io
+127.0.0.9       rpc.ankr.com
+127.0.0.10      rpc.ankr.com
+127.0.0.11      rpc.ankr.com
+127.0.0.12      docs-demo.quiknode.pro
+127.0.0.13      docs-demo.quiknode.pro

@@ -1,0 +1,12 @@
+FROM golang:1.26-bookworm AS builder
+WORKDIR /app
+COPY /tests/mockserver.txt mockserver.go
+RUN CGO_ENABLED=0 go build -ldflags='-s -w' -o mock-backend mockserver.go
+
+FROM scratch
+WORKDIR /
+COPY --from=builder /app/mock-backend /mock-backend
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY certs /certs
+EXPOSE 443
+ENTRYPOINT ["/mock-backend"]

@@ -1,0 +1,22 @@
+# Binaries
+/proxy
+
+# Compiled C & eBPF objects
+/internal/ebpf/lib/*.o
+/internal/ktls/lib/*.o
+
+# Local OpenSSL build directory
+/internal/ktls/lib/openssl/
+
+# Generated TLS certificates
+/certs/
+
+# Temporary test files
+/tests/body.json
+
+# IDE and OS specific files
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo

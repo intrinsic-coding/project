@@ -66,6 +66,7 @@ update-build-time:
 
 c-code: $(OPENSSL_DIR)/libssl.a update-build-time
 	@echo "Compiling C components..."
+	mkdir -p internal/ebpf/lib internal/ktls/lib/openssl
 	clang -target bpf -O2 -g -c ./internal/ebpf/src/bpf_h2_parser.c -o ./internal/ebpf/lib/bpf_h2_parser.o
 	gcc -O2 -fPIC -I. -I./internal/ktls/lib/openssl/include -no-pie \
 		-DLB_CERT_PATH='"./certs/server.crt"' \

@@ -53,7 +53,8 @@ COPY --from=openssl-builder /out/openssl/libcrypto.a /app/internal/ktls/lib/open
 
 RUN go run internal/routes/generator.go
 
-RUN clang -target bpf -O2 -g -I/usr/include/$(uname -m)-linux-gnu -I/usr/include \
+RUN mkdir -p internal/ebpf/lib internal/ktls/lib/openssl && \
+    clang -target bpf -O2 -g -I/usr/include/$(uname -m)-linux-gnu -I/usr/include \
     -c ./internal/ebpf/src/bpf_h2_parser.c -o ./internal/ebpf/lib/bpf_h2_parser.o && \
     gcc -O2 -fPIC -I. -I./internal/ktls/lib/openssl/include -no-pie \
         -DLB_CERT_PATH='"./certs/server.crt"' -DLB_KEY_PATH='"./certs/server.key"' \
